@@ -6,7 +6,7 @@ WITH raw_orders AS (
         total_amount,
         status
     FROM {{ source('raw_data', 'orders') }}
-    WHERE status IN ('Completed', 'Shipped')
+    WHERE status IN ('completed', 'shipped')
 )
 SELECT
     order_id,
