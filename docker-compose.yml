@@ -1,0 +1,40 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:14
+    restart: always
+    user: postgres
+    environment:
+      POSTGRES_USER: dbt
+      POSTGRES_PASSWORD: dbt
+      POSTGRES_DB: dbt_database
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dbt -d dbt_database"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  dbt:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DBT_PROFILES_DIR: /app/profiles
+      DBT_PROJECT_DIR: /app
+    command: >
+      bash -c "
+        source /app/dbt-env/bin/activate &&
+        dbt debug &&
+        dbt run &&
+        dbt test &&
+        dbt docs generate
+      "
+
+volumes:
+  pgdata:
